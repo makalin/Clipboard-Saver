@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clipboard History</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .search-container {
+      margin-bottom: 20px;
+    }
+    
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    
+    .clipboard-item {
+      background: white;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .clipboard-item:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .timestamp {
+      color: #666;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search clipboard history...">
+  </div>
+  <div id="clipboardHistory"></div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // Request initial history
+    ipcRenderer.send('get-clipboard-history');
+    
+    // Handle clipboard history updates
+    ipcRenderer.on('clipboard-history', (event, items) => {
+      displayHistory(items);
+    });
+    
+    // Handle history clear
+    ipcRenderer.on('history-cleared', () => {
+      document.getElementById('clipboardHistory').innerHTML = '';
+    });
+    
+    function displayHistory(items) {
+      const container = document.getElementById('clipboardHistory');
+      container.innerHTML = '';
+      
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'clipboard-item';
+        div.onclick = () => {
+          ipcRenderer.send('copy-to-clipboard', item.content);
+        };
+        
+        div.innerHTML = `
+          <div class="content">${escapeHtml(item.content)}</div>
+          <div class="timestamp">${new Date(item.timestamp).toLocaleString()}</div>
+        `;
+        
+        container.appendChild(div);
+      });
+    }
+    
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const items = document.getElementsByClassName('clipboard-item');
+      
+      Array.from(items).forEach(item => {
+        const content = item.querySelector('.content').textContent.toLowerCase();
+        item.style.display = content.includes(searchTerm) ? 'block' : 'none';
+      });
+    });
+    
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
