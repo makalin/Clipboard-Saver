@@ -23,8 +23,8 @@ A powerful system tray application that automatically saves your clipboard histo
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/clipboard-saver.git
-cd clipboard-saver
+git clone https://github.com/makalin/Clipboard-Saver.git
+cd Clipboard-Saver
 ```
 
 2. Install dependencies:
